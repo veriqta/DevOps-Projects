@@ -57,22 +57,22 @@ Install the tools needed for the project you selected. Use the official instruct
 | Restic | [Install](https://restic.readthedocs.io/en/stable/020_installation.html) | `restic version` |
 | Infracost | [Install](https://www.infracost.io/docs/#quick-start) | `infracost --version` |
 
-## First check
+## Optional contributor checks
 
 ```bash
-python3 -m unittest discover -s 04.tests -v
-node --check 02.examples/app/server.js
+python3 -m unittest discover -s .github/checks -v
+node --check 10.basic-dockerfile/files/app/server.js
 ```
 
 Set `NODE_BIN` to an absolute Node executable path if `node` is not on PATH. The HTTP integration tests start temporary loopback servers and stop them automatically. Linux-only checks are skipped on other systems. The container smoke test is separate because it requires Docker:
 
 ```bash
-bash 04.tests/container-smoke.sh
+bash .github/checks/container-smoke.sh
 ```
 
 ## Working from a ZIP
 
-Extract the ZIP, open a terminal in `DevOps-Projects`, and run the checks above. You do not need to clone the archived upstream repository. To publish your own copy, create an empty repository in your account, initialize Git here, and set its remote to your new repository.
+Extract the ZIP, open `README.md`, then begin with `01.server-performance-stats/README.md`. Contributor checks above are optional for learners. You do not need to clone the archived upstream repository. To publish your own copy, create an empty repository in your account, initialize Git here, and set its remote to your new repository.
 
 ## Keep labs separate
 

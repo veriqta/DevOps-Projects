@@ -1,0 +1,32 @@
+name: Deploy Node lab
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: node-lab
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: lab-server
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure deployment identity
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Upload and activate
+        env:
+          LAB_HOST: ${{ secrets.LAB_HOST }}
+          LAB_USER: ${{ secrets.LAB_USER }}
+        run: |
+          ssh "$LAB_USER@$LAB_HOST" 'mkdir -p ~/devops-upload/files/app ~/devops-upload/files'
+          scp 15.node-js-service-deployment/files/app/server.js "$LAB_USER@$LAB_HOST:devops-upload/files/app/server.js"
+          scp 15.node-js-service-deployment/files/deploy-node.sh "$LAB_USER@$LAB_HOST:devops-upload/files/deploy-node.sh"
+          ssh "$LAB_USER@$LAB_HOST" 'cd ~/devops-upload && bash files/deploy-node.sh'

@@ -1,0 +1,26 @@
+name: Publish demo image
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/demo" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: 16.dockerized-service/files/app
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+      - run: echo '${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}' >> "$GITHUB_STEP_SUMMARY"
