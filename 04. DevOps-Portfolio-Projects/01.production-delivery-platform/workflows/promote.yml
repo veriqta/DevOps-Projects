@@ -1,0 +1,37 @@
+name: Promote Orders release
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Full public image@sha256 digest
+        required: true
+permissions: {contents: read}
+concurrency: {group: orders-promotion, cancel-in-progress: false}
+jobs:
+  staging:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, orders-lab]
+    environment: staging
+    steps:
+      - uses: actions/checkout@v6
+      - name: Deploy staging on the dedicated lab host
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          [[ "$IMAGE" =~ ^ghcr.io/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$ ]] || exit 2
+          cd 01.production-delivery-platform
+          bash deploy/release.sh staging "$IMAGE"
+  production:
+    if: github.ref == 'refs/heads/main'
+    needs: staging
+    runs-on: [self-hosted, linux, orders-lab]
+    environment: production
+    steps:
+      - uses: actions/checkout@v6
+      - name: Promote exactly the same digest
+        env:
+          IMAGE: ${{ inputs.image }}
+        run: |
+          [[ "$IMAGE" =~ ^ghcr.io/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$ ]] || exit 2
+          cd 01.production-delivery-platform
+          bash deploy/release.sh production "$IMAGE"

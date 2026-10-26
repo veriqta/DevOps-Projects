@@ -1,0 +1,11 @@
+groups:
+  - name: orders
+    rules:
+      - alert: CheckoutErrorBudgetBurn
+        expr: sum(rate(orders_requests_total{status=~"5.."}[1m])) / clamp_min(sum(rate(orders_requests_total[1m])), 0.001) > 0.01
+        for: 30s
+        annotations:
+          summary: More than one percent of checkout attempts fail
+      - alert: OrdersTargetDown
+        expr: up{job="orders"} == 0
+        for: 15s

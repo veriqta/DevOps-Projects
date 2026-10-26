@@ -1,0 +1,37 @@
+name: portfolio-recovery
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: orders
+    secrets: [db_password]
+    command: ["postgres", "-c", "wal_level=replica", "-c", "archive_mode=on", "-c", "archive_command=(test -f /archive/%f && cmp -s %p /archive/%f) || (test ! -f /archive/%f && cp %p /archive/%f)", "-c", "archive_timeout=30s"]
+    volumes:
+      - data:/var/lib/postgresql/data
+      - archive:/archive
+      - backup:/backup
+      - ./database/init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d orders"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  restore:
+    image: postgres:17-alpine
+    profiles: [restore]
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: orders
+    secrets: [db_password]
+    volumes:
+      - restored:/var/lib/postgresql/data
+      - archive:/archive:ro
+secrets:
+  db_password:
+    file: .lab/db-password
+volumes:
+  data: {}
+  archive: {}
+  backup: {}
+  restored: {}

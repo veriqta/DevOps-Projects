@@ -1,0 +1,76 @@
+{
+  "uid": "orders",
+  "title": "Orders customer journey",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Checkout requests / second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(orders_requests_total[1m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Checkout failure ratio",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(orders_requests_total{status=~\"5..\"}[1m])) / clamp_min(sum(rate(orders_requests_total[1m])),0.001)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Checkout p95 latency",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95,sum by(le)(rate(orders_duration_seconds_bucket[1m])))",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "refresh": "5s"
+}

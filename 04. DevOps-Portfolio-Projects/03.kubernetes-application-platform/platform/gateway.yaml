@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: orders
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: gateway}
+  template:
+    metadata:
+      labels: {app: gateway}
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:stable-alpine
+          ports: [{containerPort: 8443}]
+          volumeMounts:
+            - {name: config, mountPath: /etc/nginx/conf.d, readOnly: true}
+            - {name: cert, mountPath: /etc/nginx/tls, readOnly: true}
+      volumes:
+        - name: config
+          configMap: {name: gateway-config}
+        - name: cert
+          secret: {secretName: gateway-tls}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: orders
+spec:
+  selector: {app: gateway}
+  ports: [{port: 443, targetPort: 8443}]

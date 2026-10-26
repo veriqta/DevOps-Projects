@@ -1,0 +1,17 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: orders
+  namespace: orders
+spec:
+  interval: 1m
+  chart:
+    spec:
+      chart: ./03.kubernetes-application-platform/chart
+      sourceRef: {kind: GitRepository, name: portfolio, namespace: flux-system}
+      reconcileStrategy: Revision
+  values:
+    image: orders:lab
+    replicas: 2
+    version: gitops-v1
+    secretName: orders-runtime

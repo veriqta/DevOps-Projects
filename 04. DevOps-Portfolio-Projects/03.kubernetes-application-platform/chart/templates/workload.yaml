@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels: {app: orders}
+  template:
+    metadata:
+      labels: {app: orders}
+    spec:
+      containers:
+        - name: orders
+          image: {{ .Values.image | quote }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - {name: VERSION, value: {{ .Values.version | quote }}}
+            - {name: WELCOME_MESSAGE, value: {{ .Values.message | quote }}}
+            - name: LAB_TOKEN
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.secretName }}, key: token}
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 5
+          resources:
+            requests: {cpu: {{ .Values.cpuRequest }}, memory: {{ .Values.memoryRequest }}}
+            limits: {cpu: 500m, memory: 128Mi}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders
+spec:
+  selector: {app: orders}
+  ports: [{name: http, port: 80, targetPort: 8080}]

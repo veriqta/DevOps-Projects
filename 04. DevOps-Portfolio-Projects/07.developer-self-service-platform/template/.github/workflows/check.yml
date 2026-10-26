@@ -1,0 +1,10 @@
+name: Check generated service
+on: [push, pull_request, workflow_dispatch]
+permissions: {contents: read}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: python3 -m unittest discover -v
+      - run: docker build -t generated-service:test .

@@ -1,0 +1,12 @@
+name: Orders pull request checks
+on: [pull_request, workflow_dispatch]
+permissions: {contents: read}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m unittest discover -s 01.production-delivery-platform/app -v
+      - run: docker build -t orders:test 01.production-delivery-platform/app

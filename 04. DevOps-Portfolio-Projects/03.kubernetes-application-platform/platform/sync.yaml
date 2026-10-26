@@ -1,0 +1,10 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: orders-platform
+  namespace: flux-system
+spec:
+  interval: 1m
+  path: ./03.kubernetes-application-platform/gitops
+  prune: true
+  sourceRef: {kind: GitRepository, name: portfolio}

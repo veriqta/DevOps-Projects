@@ -1,0 +1,4 @@
+apiVersion: 1
+providers:
+  - name: orders
+    options: {path: /var/lib/grafana/dashboards}

@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      http: {endpoint: "0.0.0.0:4318"}
+  filelog:
+    include: [/logs/orders.json]
+    start_at: beginning
+    operators:
+      - type: json_parser
+        parse_to: attributes
+processors:
+  resource:
+    attributes:
+      - {key: service.name, value: orders, action: upsert}
+  batch: {}
+exporters:
+  otlphttp/tempo:
+    endpoint: http://tempo:4318
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/tempo]
+    logs:
+      receivers: [filelog]
+      processors: [resource, batch]
+      exporters: [otlphttp/loki]

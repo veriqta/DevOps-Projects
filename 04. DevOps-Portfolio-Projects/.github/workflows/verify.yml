@@ -1,0 +1,61 @@
+name: Verify portfolio projects
+on: [push, pull_request, workflow_dispatch]
+permissions: {contents: read}
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python3 .github/checks.py
+  configuration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v3
+        with: {terraform_version: '1.13.4'}
+      - run: terraform fmt -check -recursive .
+      - run: terraform -chdir=02.secure-cloud-infrastructure/bootstrap init -backend=false && terraform -chdir=02.secure-cloud-infrastructure/bootstrap validate
+      - run: terraform -chdir=02.secure-cloud-infrastructure/terraform init -backend=false && terraform -chdir=02.secure-cloud-infrastructure/terraform validate
+      - run: terraform -chdir=08.cloud-cost-and-capacity/terraform init -backend=false && terraform -chdir=08.cloud-cost-and-capacity/terraform validate
+      - run: |
+          mkdir -p 06.database-disaster-recovery/.lab
+          printf 'disposable-ci-password' > 06.database-disaster-recovery/.lab/db-password
+          docker compose -f 04.sre-observability-and-incidents/compose.yaml config --quiet
+          docker compose -f 06.database-disaster-recovery/compose.yaml config --quiet
+          docker compose -f 08.cloud-cost-and-capacity/compose.yaml config --quiet
+  container-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - run: bash .github/container-smoke.sh
+  kubernetes-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: helm/kind-action@v1
+        with: {cluster_name: orders-platform}
+      - run: |
+          cd 03.kubernetes-application-platform
+          mkdir -p .lab
+          docker build -t orders:lab app
+          kind load docker-image orders:lab --name orders-platform
+          kubectl create namespace orders
+          kubectl -n orders create secret generic orders-runtime --from-literal=token=ci-lab-value
+          helm upgrade --install orders chart -n orders --wait --timeout=2m
+          openssl req -x509 -newkey rsa:2048 -nodes -days 2 -keyout .lab/tls.key -out .lab/tls.crt -subj /CN=orders.local -addext subjectAltName=DNS:orders.local
+          kubectl -n orders create secret tls gateway-tls --cert=.lab/tls.crt --key=.lab/tls.key
+          kubectl -n orders create configmap gateway-config --from-file=default.conf=platform/nginx.conf
+          kubectl apply -f platform/gateway.yaml
+          kubectl -n orders rollout status deployment/gateway --timeout=120s
+          kubectl -n orders port-forward service/gateway 8443:443 > .lab/forward.log 2>&1 &
+          forward_pid=$!
+          trap 'kill "$forward_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS --cacert .lab/tls.crt --resolve orders.local:8443:127.0.0.1 https://orders.local:8443/health; then exit 0; fi
+            sleep 2
+          done
+          exit 1

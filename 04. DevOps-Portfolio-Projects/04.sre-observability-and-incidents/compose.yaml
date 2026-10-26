@@ -1,0 +1,40 @@
+name: portfolio-sre
+services:
+  app:
+    build: ./app
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      LOG_FILE: /logs/orders.json
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: ["logs:/logs"]
+    user: "0:0" # Local log-volume convenience; harden ownership before a production adaptation.
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.131.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./monitoring/collector.yaml:/etc/otelcol/config.yaml:ro
+      - logs:/logs:ro
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ./monitoring/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+  loki:
+    image: grafana/loki:3.5.3
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes: ["./monitoring/loki.yaml:/etc/loki/config.yaml:ro"]
+  tempo:
+    image: grafana/tempo:2.8.2
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes: ["./monitoring/tempo.yaml:/etc/tempo.yaml:ro"]
+  grafana:
+    image: grafana/grafana:12.1.0
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ./monitoring/datasources.yaml:/etc/grafana/provisioning/datasources/sources.yaml:ro
+      - ./monitoring/dashboards.yaml:/etc/grafana/provisioning/dashboards/default.yaml:ro
+      - ./monitoring/orders-dashboard.json:/var/lib/grafana/dashboards/orders.json:ro
+volumes:
+  logs: {}

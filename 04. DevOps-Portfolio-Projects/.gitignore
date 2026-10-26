@@ -1,0 +1,11 @@
+**/.lab/
+**/.runtime/
+**/.generated/
+**/__pycache__/
+*.pyc
+**/.terraform/
+*.tfstate*
+*.plan
+*.key
+.env
+.DS_Store

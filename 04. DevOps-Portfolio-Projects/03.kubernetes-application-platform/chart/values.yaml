@@ -1,0 +1,7 @@
+image: orders:lab
+replicas: 2
+version: v1
+message: Welcome
+secretName: orders-runtime
+cpuRequest: 100m
+memoryRequest: 64Mi

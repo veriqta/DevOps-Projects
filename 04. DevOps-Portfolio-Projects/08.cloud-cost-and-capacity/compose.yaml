@@ -1,0 +1,9 @@
+name: portfolio-capacity
+services:
+  app:
+    build: ./app
+    ports: ["127.0.0.1:8080:8080"]
+    cpus: ${CPU_LIMIT:-0.25}
+    mem_limit: ${MEMORY_LIMIT:-128m}
+    environment:
+      DELAY_MS: ${DELAY_MS:-100}
