@@ -1,0 +1,46 @@
+name: Verify labs
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  local:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - run: python -m unittest discover -s 04.tests -v
+      - run: node --check 02.examples/app/server.js && node 04.tests/test_timer.cjs
+      - run: bash -n 03.tools/deploy-node.sh 03.tools/backup-db.sh 04.tests/container-smoke.sh
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - run: bash 04.tests/container-smoke.sh
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v3
+        with: {terraform_version: '1.13.4'}
+      - run: terraform fmt -check -recursive 02.examples
+      - run: terraform -chdir=02.examples/terraform-digitalocean init -backend=false && terraform -chdir=02.examples/terraform-digitalocean validate
+      - run: terraform -chdir=02.examples/terraform-cost init -backend=false && terraform -chdir=02.examples/terraform-cost validate
+  kubernetes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: helm/kind-action@v1
+        with: {cluster_name: devops-lab}
+      - run: |
+          docker build -t devops-demo:lab 02.examples/app
+          kind load docker-image devops-demo:lab --name devops-lab
+          kubectl create namespace devops-lab
+          kubectl apply -k 02.examples/kustomize/overlays/lab
+          kubectl -n devops-lab rollout status deployment/demo --timeout=120s
+          kubectl -n devops-lab run probe --image=curlimages/curl:8.16.0 --restart=Never --command -- curl -fsS http://demo/health
+          kubectl -n devops-lab wait --for=jsonpath='{.status.phase}'=Succeeded pod/probe --timeout=120s

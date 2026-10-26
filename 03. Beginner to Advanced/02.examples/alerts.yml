@@ -1,0 +1,9 @@
+groups:
+  - name: demo
+    rules:
+      - alert: DemoUnavailable
+        expr: up{job="demo"} == 0
+        for: 15s
+        labels: {severity: warning}
+        annotations:
+          summary: Demo has been unavailable for 15 seconds

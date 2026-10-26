@@ -1,0 +1,12 @@
+[Unit]
+Description=DevOps lab heartbeat
+After=network.target
+[Service]
+User=nobody
+ExecStart=/bin/sh -c 'while true; do date -u; sleep 5; done'
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: demo}
+  template:
+    metadata:
+      labels: {app: demo}
+    spec:
+      containers:
+        - name: demo
+          image: devops-demo:lab
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8080}]
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {cpu: 250m, memory: 128Mi}
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+spec:
+  selector: {app: demo}
+  ports: [{port: 80, targetPort: 8080}]

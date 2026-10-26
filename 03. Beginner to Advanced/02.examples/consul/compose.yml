@@ -1,0 +1,9 @@
+name: devops-discovery
+services:
+  app:
+    build: ../app
+  consul:
+    image: hashicorp/consul:1.21
+    command: ["agent", "-dev", "-client=0.0.0.0"]
+    ports: ["127.0.0.1:8500:8500"]
+    volumes: ["./service.json:/consul/config/service.json:ro"]

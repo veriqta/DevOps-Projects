@@ -1,0 +1,13 @@
+name: devops-bluegreen
+services:
+  blue:
+    build: ../app
+    environment: {VERSION: blue}
+  green:
+    build: ../app
+    environment: {VERSION: green}
+  proxy:
+    image: nginx:stable-alpine
+    ports: ["127.0.0.1:8080:80"]
+    volumes: ["./config:/etc/nginx/conf.d:ro"]
+    depends_on: [blue, green]

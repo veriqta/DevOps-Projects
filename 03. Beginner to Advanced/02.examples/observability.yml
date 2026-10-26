@@ -1,0 +1,14 @@
+name: devops-observability-lab
+services:
+  app:
+    build: ./app
+    ports: ["127.0.0.1:8080:8080"]
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro
+  grafana:
+    image: grafana/grafana:12.1.0
+    ports: ["127.0.0.1:3000:3000"]

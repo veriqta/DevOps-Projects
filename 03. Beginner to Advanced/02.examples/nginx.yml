@@ -1,0 +1,22 @@
+- name: Configure a disposable Ubuntu web server
+  hosts: web
+  become: true
+  tasks:
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Manage homepage
+      ansible.builtin.copy:
+        content: "<h1>Managed by Ansible</h1>\n"
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+    - name: Start Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true

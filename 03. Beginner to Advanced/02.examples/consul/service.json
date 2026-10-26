@@ -1,0 +1,1 @@
+{"service":{"name":"demo","port":8080,"address":"app","check":{"http":"http://app:8080/health","interval":"5s","timeout":"2s"}}}

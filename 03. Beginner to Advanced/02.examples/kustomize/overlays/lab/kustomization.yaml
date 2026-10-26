@@ -1,0 +1,6 @@
+resources:
+  - ../../base
+namespace: devops-lab
+replicas:
+  - name: demo
+    count: 3

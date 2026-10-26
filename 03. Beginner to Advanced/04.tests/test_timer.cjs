@@ -1,0 +1,16 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'../02.examples/pomodoro/index.html'),'utf8');
+const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+let now=0, tick;
+const context={clock:{textContent:'25:00'},start:{},pause:{},reset:{},Date:{now:()=>now},setInterval:fn=>tick=fn,Math};
+vm.createContext(context);vm.runInContext(script,context);
+context.start.onclick();now=5000;tick();assert.equal(context.clock.textContent,'24:55');
+context.start.onclick();now=6000;tick();assert.equal(context.clock.textContent,'24:54');
+context.pause.onclick();now=12000;tick();assert.equal(context.clock.textContent,'24:54');
+context.start.onclick();now=13000;tick();assert.equal(context.clock.textContent,'24:53');
+context.reset.onclick();assert.equal(context.clock.textContent,'25:00');
+context.start.onclick();now+=1500000;tick();assert.equal(context.clock.textContent,'00:00');
+console.log('Timer: start, duplicate start, pause, resume, reset, expiry passed');

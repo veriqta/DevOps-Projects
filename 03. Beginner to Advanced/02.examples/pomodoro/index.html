@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pomodoro Lab</title>
+<style>body{font:24px system-ui;text-align:center;margin:12vh auto}button{font:inherit;margin:8px;padding:10px}output{display:block;font-size:72px}</style>
+<h1>Pomodoro Lab</h1><output id="clock" aria-live="off">25:00</output><button id="start">Start</button><button id="pause">Pause</button><button id="reset">Reset</button>
+<script>
+let remaining=1500, deadline=null;
+const draw=()=>{clock.textContent=Math.floor(remaining/60).toString().padStart(2,'0')+':'+(remaining%60).toString().padStart(2,'0')};
+start.onclick=()=>{if(deadline===null&&remaining>0)deadline=Date.now()+remaining*1000};
+pause.onclick=()=>{if(deadline!==null)remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));deadline=null;draw()};
+reset.onclick=()=>{remaining=1500;deadline=null;draw()};
+setInterval(()=>{if(deadline!==null){remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));if(!remaining)deadline=null;draw()}},200);
+</script></html>

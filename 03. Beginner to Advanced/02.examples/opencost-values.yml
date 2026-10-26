@@ -1,0 +1,11 @@
+opencost:
+  prometheus:
+    internal:
+      enabled: true
+      namespaceName: monitoring
+      serviceName: metrics-server
+      port: 80
+  exporter:
+    defaultClusterId: devops-lab
+  ui:
+    enabled: true

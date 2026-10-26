@@ -1,0 +1,19 @@
+name: devops-compose-lab
+services:
+  app:
+    build: ./app
+    ports: ["127.0.0.1:8080:8080"]
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: local-lab-only
+      POSTGRES_DB: lab
+    volumes: ["db-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  db-data: {}

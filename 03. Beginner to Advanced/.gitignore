@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.env
+*.tfstate*
+*.tfplan
+*.plan
+.terraform/
+*.pem
+*.key
+.DS_Store
+.lab/
+02.examples/bluegreen/config/
+cosign.key
+*.sql
+*.partial
